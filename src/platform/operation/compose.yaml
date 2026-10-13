@@ -1,0 +1,21 @@
+services:
+  operation-api:
+    build:
+      context: ..
+      dockerfile: operation/Dockerfile
+    environment:
+      HTTP_ADDR: ":8080"
+      VMS_API_TOKEN: "${VMS_API_TOKEN:?Run python3 src/infra/tools/setup_env.py first}"
+    ports:
+      - "${VMS_BIND_ADDR:-127.0.0.1}:${VMS_OPERATION_PORT:-18084}:8080"
+    healthcheck:
+      test: ["CMD", "/vms-api", "--healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    stop_grace_period: 10s

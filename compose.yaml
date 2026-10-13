@@ -1,0 +1,6 @@
+name: vms-project
+include:
+  - path: "${VMS_CAMERA_COMPOSE_FILE:-./src/platform/camera/compose.yaml}"
+  - path: ./src/platform/model/compose.yaml
+  - path: ./src/platform/analysis/compose.yaml
+  - path: ./src/platform/operation/compose.yaml

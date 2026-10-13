@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Planned camera registry creation requests",
+  "description": "Contract only; no registration HTTP route is implemented. Select a request through $defs.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/DeviceCreate"
+    },
+    {
+      "$ref": "#/$defs/SourceCreate"
+    }
+  ],
+  "$defs": {
+    "DeviceCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "\\S"
+        },
+        "device_kind": {
+          "enum": [
+            "CCTV",
+            "SMART_GLASSES",
+            "TEST"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "device_id",
+        "display_name",
+        "device_kind"
+      ]
+    },
+    "SourceCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "channel_key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "\\S"
+        },
+        "transport": {
+          "enum": [
+            "RTSP",
+            "WEBRTC"
+          ]
+        },
+        "input_mode": {
+          "enum": [
+            "PULL",
+            "PUSH"
+          ]
+        },
+        "motion_mode": {
+          "enum": [
+            "FIXED",
+            "MOVING",
+            "UNKNOWN"
+          ]
+        },
+        "profiles": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "profile_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+              },
+              "codec": {
+                "type": "string",
+                "enum": [
+                  "AUTO",
+                  "H264",
+                  "H265",
+                  "VP8",
+                  "VP9",
+                  "AV1"
+                ]
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16384
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16384
+              },
+              "fps": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 240
+              }
+            },
+            "required": [
+              "profile_id",
+              "codec",
+              "width",
+              "height",
+              "fps"
+            ]
+          },
+          "description": "profile_id must be unique within this array; checked by the API."
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_id",
+        "device_id",
+        "channel_key",
+        "display_name",
+        "transport",
+        "input_mode",
+        "motion_mode",
+        "profiles"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "transport": {
+                "const": "RTSP"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input_mode": {
+                "const": "PULL"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "transport": {
+                "const": "WEBRTC"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "input_mode": {
+                "const": "PUSH"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

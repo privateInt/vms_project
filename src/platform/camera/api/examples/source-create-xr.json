@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "source_id": "xr-left",
+  "device_id": "xr-device",
+  "channel_key": "left",
+  "display_name": "XR 영상",
+  "transport": "WEBRTC",
+  "input_mode": "PUSH",
+  "motion_mode": "MOVING",
+  "profiles": [
+    {
+      "profile_id": "main",
+      "codec": "AUTO",
+      "width": 1280,
+      "height": 720,
+      "fps": 30
+    }
+  ]
+}

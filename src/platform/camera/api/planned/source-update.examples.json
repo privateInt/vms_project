@@ -1,0 +1,75 @@
+{
+  "requests": [
+    {
+      "name": "rename_cctv_channel",
+      "source_id": "camera-001-main",
+      "idempotency_key": "source-name-change-001",
+      "body": {
+        "schema_version": "v1",
+        "expected_version": 1,
+        "display_name": "1층 출입구 영상"
+      }
+    },
+    {
+      "name": "rename_glasses_stream",
+      "source_id": "glasses-001-stream",
+      "idempotency_key": "source-name-change-002",
+      "body": {
+        "schema_version": "v1",
+        "expected_version": 7,
+        "display_name": "현장 점검 영상"
+      }
+    },
+    {
+      "name": "preserve_surrounding_spaces",
+      "source_id": "test-source-001",
+      "idempotency_key": "source-name-change-003",
+      "body": {
+        "schema_version": "v1",
+        "expected_version": 2,
+        "display_name": "  시험 영상  "
+      }
+    }
+  ],
+  "first_success": {
+    "http_status": 200,
+    "headers": {
+      "Idempotency-Replayed": "false",
+      "X-Request-ID": "example-source-update-001"
+    },
+    "body": {
+      "source": {
+        "schema_version": "v1",
+        "source_id": "camera-001-main",
+        "device_id": "camera-001",
+        "channel_key": "ch1",
+        "display_name": "1층 출입구 영상",
+        "transport": "RTSP",
+        "input_mode": "PULL",
+        "motion_mode": "FIXED",
+        "profiles": [
+          {
+            "profile_id": "main",
+            "codec": "H264",
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          },
+          {
+            "profile_id": "sub",
+            "codec": "H264",
+            "width": 640,
+            "height": 360,
+            "fps": 15
+          }
+        ],
+        "version": 2,
+        "created_at": "2026-09-30T08:00:00Z",
+        "updated_at": "2026-09-30T09:00:00Z"
+      },
+      "registration_state": "REGISTERED",
+      "runtime_verified": false,
+      "request_id": "example-source-update-001"
+    }
+  }
+}

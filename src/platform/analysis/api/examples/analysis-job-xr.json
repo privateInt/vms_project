@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "analysis_job_id": "job-xr-001",
+  "source_id": "source-xr-001",
+  "stream_profile_id": "main",
+  "template_version_id": "object-detection-v1",
+  "deployment_refs": [
+    {
+      "role": "detector",
+      "deployment_id": "deployment-detector-001",
+      "model_version_id": "model-detector-v1"
+    }
+  ],
+  "target_fps": 5,
+  "desired_state": "RUNNING",
+  "generation": 1
+}

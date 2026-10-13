@@ -1,0 +1,5 @@
+include:
+  - path:
+      - ./compose.yaml
+      - ./compose.registry.yaml
+  - path: ../../infra/postgresql/compose.camera.yaml

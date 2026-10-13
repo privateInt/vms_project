@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SourceSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "v1"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "device_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Must contain non-whitespace characters; checked by the API."
+    },
+    "device_kind": {
+      "type": "string",
+      "enum": [
+        "CCTV",
+        "SMART_GLASSES",
+        "TEST"
+      ]
+    },
+    "transport": {
+      "type": "string",
+      "enum": [
+        "RTSP",
+        "WEBRTC"
+      ]
+    },
+    "input_mode": {
+      "type": "string",
+      "enum": [
+        "PULL",
+        "PUSH"
+      ]
+    },
+    "motion_mode": {
+      "type": "string",
+      "enum": [
+        "FIXED",
+        "MOVING",
+        "UNKNOWN"
+      ]
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "codec": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "H264",
+              "H265",
+              "VP8",
+              "VP9",
+              "AV1"
+            ]
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16384
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16384
+          },
+          "fps": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 240
+          }
+        },
+        "required": [
+          "profile_id",
+          "codec",
+          "width",
+          "height",
+          "fps"
+        ]
+      },
+      "description": "profile_id must be unique within this array; checked by the API."
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "supports_onvif": {
+          "type": "boolean",
+          "default": false
+        },
+        "supports_ptz": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": []
+    }
+  },
+  "required": [
+    "schema_version",
+    "source_id",
+    "device_id",
+    "display_name",
+    "device_kind",
+    "transport",
+    "input_mode",
+    "motion_mode",
+    "profiles",
+    "capabilities"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "transport": {
+            "const": "RTSP"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input_mode": {
+            "const": "PULL"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "transport": {
+            "const": "WEBRTC"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "input_mode": {
+            "const": "PUSH"
+          }
+        }
+      }
+    }
+  ]
+}

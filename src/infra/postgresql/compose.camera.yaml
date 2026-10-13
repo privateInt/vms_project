@@ -1,0 +1,52 @@
+services:
+  camera-db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: vms_camera
+      POSTGRES_USER: camera_admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/camera_admin_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets: [camera_admin_password, camera_migration_password, camera_runtime_password]
+    volumes:
+      - camera-data:/var/lib/postgresql/data
+      - ./camera-init.sh:/docker-entrypoint-initdb.d/10-camera.sh:ro
+    networks: [camera-storage]
+    healthcheck:
+      # The temporary init server listens only on a Unix socket. TCP readiness
+      # prevents migration from racing the role/bootstrap script.
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U camera_admin -d vms_camera"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+    stop_grace_period: 30s
+  camera-migrate:
+    image: "${VMS_CAMERA_IMAGE:-${COMPOSE_PROJECT_NAME:-vms-project}-camera-control:step04}"
+    entrypoint: [/camera-migrate]
+    command: [--apply, --grant-runtime]
+    environment:
+      CAMERA_DATABASE_URL_FILE: /run/secrets/camera_migration_dsn
+    secrets: [camera_migration_dsn]
+    networks: [camera-storage]
+    profiles: [camera-tools]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: "no"
+networks:
+  camera-storage:
+    internal: true
+volumes:
+  camera-data:
+secrets:
+  camera_admin_password:
+    file: ../../../var/camera/secrets/admin-password
+  camera_migration_password:
+    file: ../../../var/camera/secrets/migration-password
+  camera_runtime_password:
+    file: ../../../var/camera/secrets/runtime-password
+  camera_migration_dsn:
+    file: ../../../var/camera/secrets/migration-dsn
+  camera_runtime_dsn:
+    file: ../../../var/camera/secrets/runtime-dsn

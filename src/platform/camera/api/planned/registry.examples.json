@@ -1,0 +1,68 @@
+[
+  {
+    "name": "cctv-device",
+    "schema": "DeviceCreate",
+    "body": {
+      "schema_version": "v1",
+      "device_id": "device-cctv-001",
+      "display_name": "CCTV 검증 입력",
+      "device_kind": "CCTV"
+    }
+  },
+  {
+    "name": "cctv-source",
+    "schema": "SourceCreate",
+    "body": {
+      "schema_version": "v1",
+      "source_id": "source-cctv-001",
+      "device_id": "device-cctv-001",
+      "display_name": "CCTV 검증 입력",
+      "transport": "RTSP",
+      "input_mode": "PULL",
+      "motion_mode": "FIXED",
+      "profiles": [
+        {
+          "profile_id": "main",
+          "codec": "H264",
+          "width": 1920,
+          "height": 1080,
+          "fps": 30
+        }
+      ],
+      "channel_key": "channel-1"
+    }
+  },
+  {
+    "name": "xr-device",
+    "schema": "DeviceCreate",
+    "body": {
+      "schema_version": "v1",
+      "device_id": "device-glasses-001",
+      "display_name": "스마트글래스 검증 입력",
+      "device_kind": "SMART_GLASSES"
+    }
+  },
+  {
+    "name": "xr-source",
+    "schema": "SourceCreate",
+    "body": {
+      "schema_version": "v1",
+      "source_id": "source-xr-001",
+      "device_id": "device-glasses-001",
+      "display_name": "스마트글래스 검증 입력",
+      "transport": "WEBRTC",
+      "input_mode": "PUSH",
+      "motion_mode": "MOVING",
+      "profiles": [
+        {
+          "profile_id": "main",
+          "codec": "H264",
+          "width": 1280,
+          "height": 720,
+          "fps": 30
+        }
+      ],
+      "channel_key": "channel-1"
+    }
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "schema_version": "v1",
+  "source_id": "source-cctv-001",
+  "device_id": "device-cctv-001",
+  "display_name": "CCTV 검증 입력",
+  "device_kind": "CCTV",
+  "transport": "RTSP",
+  "input_mode": "PULL",
+  "motion_mode": "FIXED",
+  "profiles": [
+    {
+      "profile_id": "main",
+      "codec": "H264",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    }
+  ],
+  "capabilities": {
+    "supports_onvif": true,
+    "supports_ptz": false
+  }
+}

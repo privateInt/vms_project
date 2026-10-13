@@ -1,0 +1,11 @@
+services:
+  camera-api:
+    environment:
+      CAMERA_DATABASE_URL_FILE: /run/secrets/camera_runtime_dsn
+    secrets: [camera_runtime_dsn]
+    networks: [default, camera-storage]
+    depends_on:
+      camera-db:
+        condition: service_healthy
+    healthcheck:
+      start_period: 20s

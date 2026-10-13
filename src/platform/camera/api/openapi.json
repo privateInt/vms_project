@@ -1,0 +1,3240 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "VMS camera API",
+    "version": "0.7.0-device-delete",
+    "description": "Camera registration, version-checked display-name updates and logical source/device deletion, lookup and listing, plus legacy contract validation. Registry APIs require explicit database configuration, schema version 7 and the documented runtime grants. Device deletion requires no undeleted child sources. Both deletions use the explicitly reviewed registry-only release with no managed usage creators. Source sessions, ONVIF/PTZ, media ingest and recording are not implemented. Operational activation is a separate step."
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "liveness",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Process is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported HTTP method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "readiness",
+        "security": [],
+        "description": "When CAMERA_DATABASE_URL is configured, checks camera migration history and required registry permissions. Otherwise checks HTTP foundation only. business_runtime_ready remains false.",
+        "responses": {
+          "200": {
+            "description": "HTTP API ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Draining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported HTTP method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "openapi",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "This OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported HTTP method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform": {
+      "get": {
+        "operationId": "platformManifest",
+        "responses": {
+          "200": {
+            "description": "Implemented and planned capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Draining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported HTTP method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/validate": {
+      "post": {
+        "operationId": "validateSourceSpec",
+        "description": "Validates submitted data only. No resource is persisted, device contacted, reference resolved, or inference run. Maximum body: 65536 bytes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceSpec"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contract valid; resource_created, references_verified and runtime_verified are false",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, unknown field, trailing value, or wrong field type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type is not application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic contract violations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Draining",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported HTTP method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices": {
+      "post": {
+        "operationId": "createDevice",
+        "description": "Creates metadata only. Successful responses are retained atomically under a stable authenticated principal, method, path and Idempotency-Key. Same canonical object replays HTTP 201, Location and device fields; different input returns 409. Object key order does not matter; string values are preserved. Each HTTP request has a fresh request_id. Duplicate JSON keys, unknown or incorrectly cased properties, and non-string field values are rejected. Keys have no automatic expiry.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Device created, or original successful response replayed",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Registry disabled, unavailable or request could not be confirmed; retry creation with the same key.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON or idempotency key",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DEVICE_EXISTS or IDEMPOTENCY_CONFLICT",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid field values",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listDevices",
+        "description": "Active devices ordered by ASCII device_id. Unknown/repeated/empty query parameters are invalid. Pagination is not a snapshot; concurrent inserts can affect later pages. No filters in this version. Deleted devices are excluded and a cursor naming a deleted ID continues after that ID.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device page",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Registry disabled, unavailable or request could not be confirmed; retry creation with the same key.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or cursor",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{device_id}": {
+      "get": {
+        "operationId": "getDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active registered device",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET, PATCH, DELETE"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Registry disabled, unavailable or request could not be confirmed; retry creation with the same key.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query parameters are not supported",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid device ID",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": " New reads exclude deleted devices; historical POST/PATCH response replay never restores a deleted registration."
+      },
+      "patch": {
+        "operationId": "updateDevice",
+        "description": "Replaces only display_name. Requires a single Idempotency-Key. Validation order: authentication, method, query, path ID, conditional headers, idempotency key, media/JSON, semantic fields, then storage. Successful replay precedes current-state/version checks. Each new successful command increments version, including an unchanged name; replay does not. created_at and child sources/profiles stay unchanged; updated_at never decreases. Success is stored atomically with the update under the stable authenticated principal, PATCH, canonical device path and key. Equivalent JSON key order/escapes replay; other values conflict. Keys have no automatic expiry. Body limit is 64 KiB. The development shared principal is not production IAM.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceUpdate"
+              },
+              "example": {
+                "schema_version": "v1",
+                "expected_version": 1,
+                "display_name": "1층 출입구 CCTV"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated device or historical first-success snapshot, even after later changes; a fresh request_id is returned on every HTTP request.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "QUERY_INVALID, PRECONDITION_HEADER_UNSUPPORTED, IDEMPOTENCY_KEY_INVALID or INVALID_JSON. No query or If-Match/If-None-Match/If-Unmodified-Since header is accepted.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET, PATCH, DELETE"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DEVICE_VERSION_CONFLICT, IDEMPOTENCY_CONFLICT or DEVICE_VERSION_EXHAUSTED. Read the current device before a new version-conditioned command.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CONTRACT_INVALID: missing fields, invalid schema version/path ID, nonpositive expected_version or invalid display name.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "REGISTRY_DISABLED or DATABASE_UNAVAILABLE. If the result is uncertain, retry with the same key and body.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDevice",
+        "description": "Logically deletes one device registration using expected_version. The same device advisory lock as CreateSource precedes the active device row lock, exact version/exhaustion check, a separate undeleted-child check and trusted managed-usage guard. READ COMMITTED sees preceding source commits after the lock. Any undeleted child yields DEVICE_HAS_ACTIVE_SOURCES even without live media use. All children must first be individually deleted using Source DELETE; there is no force/cascade/purge/restore or implicit cleanup. Device tombstone, version+1, deleted_at=updated_at (UTC, never before prior updated_at) and the durable receipt commit atomically. Device ID/kind/name/created_at, deleted children/profiles and all POST/PATCH/DELETE histories remain unchanged. Deleted IDs/channels remain reserved. Authentication, method, query (including a bare question mark), decoded path, conditional headers, key, media/JSON and semantics precede storage. Successful principal/DELETE/canonical path/key receipts replay before current state/version/children/usage checks, including after restart/token rotation; changed valid bodies with a successful key conflict. Keys have no automatic expiry; failures record nothing and can be retried with the same body/key. New GET/PATCH/DELETE hide the deleted device, new lists exclude it, and cursors continue after its ID. Old device/source successes replay without resurrection. New source creation after parent deletion returns DEVICE_UNAVAILABLE with no persisted source/profile/receipt. A reviewed server-side registry-only profile, shared with source deletion, confirms absence of managed device/session/consumer/adapter creators; unknown policy/usage fails closed. Future usage admission must share the device advisory and row locks. Unlike sources, lowercase validate (including URL escapes) is a valid device ID. Limit 64 KiB and exact int64 JSON integer token. The stable shared development principal is not production IAM.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceDelete"
+              },
+              "example": {
+                "schema_version": "v1",
+                "expected_version": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "First deletion receipt or identical durable receipt on replay; 200 in both cases. DELETED and runtime_verified=false, fresh request_id matching X-Request-ID, Idempotency-Replayed false/true, no Location, Cache-Control no-store. No device snapshot, child list, profiles or credentials are returned.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDeleteResponse"
+                },
+                "example": {
+                  "deletion": {
+                    "schema_version": "v1",
+                    "device_id": "camera-001",
+                    "version": 3,
+                    "deleted_at": "2026-10-01T06:00:00Z"
+                  },
+                  "registration_state": "DELETED",
+                  "runtime_verified": false,
+                  "request_id": "example-device-delete-001"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "QUERY_INVALID, PRECONDITION_HEADER_UNSUPPORTED, IDEMPOTENCY_KEY_INVALID or INVALID_JSON. No query or If-Match/If-None-Match/If-Unmodified-Since header is accepted.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "DEVICE_NOT_FOUND: no active device exists for a new command.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET, PATCH, DELETE"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DEVICE_VERSION_CONFLICT, IDEMPOTENCY_CONFLICT, DEVICE_VERSION_EXHAUSTED, DEVICE_HAS_ACTIVE_SOURCES or DEVICE_IN_USE. A failed command writes no tombstone or success record. Version conflict precedes active children.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CONTRACT_INVALID: missing fields, schema_version other than v1, invalid decoded device ID or nonpositive expected_version.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "REGISTRY_DISABLED, DATABASE_UNAVAILABLE or DEVICE_USAGE_UNAVAILABLE. Unknown usage/profile denies deletion; database/receipt failure rolls back changes. Retry an uncertain result with the same key/body.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources": {
+      "post": {
+        "operationId": "createSource",
+        "description": "Creates metadata only. Successful responses are retained atomically under a stable authenticated principal, method, path and Idempotency-Key. Same canonical object replays HTTP 201, Location and source fields; different input returns 409. Object key order does not matter; string values are preserved. Each HTTP request has a fresh request_id. Duplicate JSON keys, unknown or incorrectly cased properties, and non-string field values are rejected. Keys have no automatic expiry.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Source created, or original successful response replayed",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Registry disabled, unavailable or request could not be confirmed; retry creation with the same key.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON or idempotency key",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SOURCE_EXISTS, SOURCE_CHANNEL_EXISTS, DEVICE_UNAVAILABLE or IDEMPOTENCY_CONFLICT. Failed requests do not consume their key.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid field values",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listSources",
+        "description": "Active sources ordered by ASCII source_id, including profiles in registration order. Optional exact device_id filter; an unknown device returns an empty page. Cursors belong to the source collection and the exact filter (including no filter); retain device_id on subsequent pages, while limit may change. Unknown/repeated/empty query parameters and invalid or mismatched cursors return 400 QUERY_INVALID. Pagination is not a snapshot across requests: new IDs after the cursor may appear, and earlier new IDs require restarting the listing. Each page reads source metadata and profiles in one SQL snapshot. Items are registration metadata, not live stream status.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          {
+            "in": "query",
+            "name": "device_id",
+            "description": "Exact parent device identifier. Omit for all active sources.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Source page; empty items is [] and next_cursor is null on the last page.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Registry database is disabled or unavailable.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "QUERY_INVALID: malformed, empty, repeated or unknown query parameter, invalid cursor, or cursor/filter mismatch.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/{source_id}": {
+      "get": {
+        "operationId": "getSource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+              "not": {
+                "const": "validate"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active registered source",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET, PATCH, DELETE"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Registry disabled, unavailable or request could not be confirmed; retry creation with the same key.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query parameters are not supported",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Source not found",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid source ID",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateSource",
+        "description": "Replaces only source display_name using the source expected_version, independently of the parent device version. Preserves identifiers, parent, channel, transport/input/motion modes, profile values/order, primary profile and created_at. Validation order: authentication, method, query, path ID, conditional headers, idempotency key, media/JSON, semantic fields, then storage. Successful replay precedes current-state/version checks. Each new command increments version even for the same name; updated_at never decreases. The full source snapshot including profiles is committed atomically with the update, scoped to the stable principal, PATCH, canonical source path and key. Equivalent key order/string escapes replay; different values conflict. POST and device PATCH keys are independent. Keys have no automatic expiry. Limit 64 KiB. Exact source_id validate and equivalent URL escapes are reserved: PATCH returns 405/Allow: POST. The shared development principal is not production IAM.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+              "not": {
+                "const": "validate"
+              }
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceUpdate"
+              },
+              "example": {
+                "schema_version": "v1",
+                "expected_version": 1,
+                "display_name": "1층 출입구 영상"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated source with ordered profiles, or the historical first-success snapshot even after later changes. Returns a fresh request_id, registration_state REGISTERED and runtime_verified false. No Location header.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                },
+                "example": {
+                  "source": {
+                    "schema_version": "v1",
+                    "source_id": "camera-001-main",
+                    "device_id": "camera-001",
+                    "channel_key": "ch1",
+                    "display_name": "1층 출입구 영상",
+                    "transport": "RTSP",
+                    "input_mode": "PULL",
+                    "motion_mode": "FIXED",
+                    "profiles": [
+                      {
+                        "profile_id": "main",
+                        "codec": "H264",
+                        "width": 1920,
+                        "height": 1080,
+                        "fps": 30
+                      },
+                      {
+                        "profile_id": "sub",
+                        "codec": "H264",
+                        "width": 640,
+                        "height": 360,
+                        "fps": 15
+                      }
+                    ],
+                    "version": 2,
+                    "created_at": "2026-09-30T08:00:00Z",
+                    "updated_at": "2026-09-30T09:00:00Z"
+                  },
+                  "registration_state": "REGISTERED",
+                  "runtime_verified": false,
+                  "request_id": "example-source-update-001"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "QUERY_INVALID, PRECONDITION_HEADER_UNSUPPORTED, IDEMPOTENCY_KEY_INVALID or INVALID_JSON. No query or If-Match/If-None-Match/If-Unmodified-Since header is accepted.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "SOURCE_NOT_FOUND: no active source exists for a new command.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET, PATCH, DELETE"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SOURCE_VERSION_CONFLICT, IDEMPOTENCY_CONFLICT or SOURCE_VERSION_EXHAUSTED. Read the current source before submitting a new version-conditioned command.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CONTRACT_INVALID: missing fields, invalid schema version/path ID, nonpositive expected_version or invalid display name.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "REGISTRY_DISABLED or DATABASE_UNAVAILABLE. If the result is uncertain, retry with the same key and body.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSource",
+        "description": "Logically deletes one source registration using expected_version. Preserves the source ID/channel reservation, profiles and successful POST/PATCH/DELETE history; does not delete the parent or sibling sources. No physical deletion or media cleanup. First success increments version once and commits deleted_at=updated_at (UTC, never earlier than the previous updated_at) with the receipt in one transaction. Authentication, method, query, decoded path, conditional headers, key, media/JSON and semantic validation precede storage. No query is accepted, including a bare question mark. The durable principal/DELETE/canonical path/key scope is independent of POST and PATCH. Matching successful requests replay before current state/version/usage checks, including after deletion or process/token rotation; a changed body with that key conflicts. Keys have no automatic expiry. A new request after deletion returns 404; GET and new lists exclude deleted rows. Old POST/PATCH successes replay historical snapshots without resurrection. This release uses an explicitly reviewed server-side registry-only policy with no session/consumer/adapter creators. Unknown policy/usage fails closed; future runtime admission must share the source row transaction. Limit 64 KiB. Exact lowercase validate (including URL escapes) is reserved: DELETE returns 405/Allow: POST. The shared development principal is not production IAM.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+              "not": {
+                "const": "validate"
+              }
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceDelete"
+              },
+              "example": {
+                "schema_version": "v1",
+                "expected_version": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "First deletion receipt or the identical durable receipt on replay; 200 in both cases. DELETED and runtime_verified=false, fresh request_id matching X-Request-ID, Idempotency-Replayed false/true, no Location, Cache-Control no-store. No source snapshot or profiles are returned.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDeleteResponse"
+                },
+                "example": {
+                  "deletion": {
+                    "schema_version": "v1",
+                    "source_id": "camera-001-main",
+                    "version": 3,
+                    "deleted_at": "2026-10-01T06:00:00Z"
+                  },
+                  "registration_state": "DELETED",
+                  "runtime_verified": false,
+                  "request_id": "example-source-delete-001"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "QUERY_INVALID, PRECONDITION_HEADER_UNSUPPORTED, IDEMPOTENCY_KEY_INVALID or INVALID_JSON. No query or If-Match/If-None-Match/If-Unmodified-Since header is accepted.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer authentication required",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "SOURCE_NOT_FOUND: no active source exists for a new command.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Unsupported method",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Allow": {
+                "schema": {
+                  "type": "string",
+                  "const": "GET, PATCH, DELETE"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SOURCE_VERSION_CONFLICT, IDEMPOTENCY_CONFLICT, SOURCE_VERSION_EXHAUSTED or SOURCE_IN_USE. A failed command writes no deletion or success record.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 64 KiB",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "CONTRACT_INVALID: missing fields, schema_version other than v1, invalid decoded source ID or nonpositive expected_version.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "REGISTRY_DISABLED, DATABASE_UNAVAILABLE or SOURCE_USAGE_UNAVAILABLE. Unknown usage/policy denies deletion; database/receipt failure rolls back all changes. Retry an uncertain result using the same key and body.",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "P0 development token; not production IAM"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "field",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "request_id"
+        ]
+      },
+      "SourceSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "source_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "device_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Must contain non-whitespace characters; checked by the API."
+          },
+          "device_kind": {
+            "type": "string",
+            "enum": [
+              "CCTV",
+              "SMART_GLASSES",
+              "TEST"
+            ]
+          },
+          "transport": {
+            "type": "string",
+            "enum": [
+              "RTSP",
+              "WEBRTC"
+            ]
+          },
+          "input_mode": {
+            "type": "string",
+            "enum": [
+              "PULL",
+              "PUSH"
+            ]
+          },
+          "motion_mode": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "MOVING",
+              "UNKNOWN"
+            ]
+          },
+          "profiles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+                },
+                "codec": {
+                  "type": "string",
+                  "enum": [
+                    "AUTO",
+                    "H264",
+                    "H265",
+                    "VP8",
+                    "VP9",
+                    "AV1"
+                  ]
+                },
+                "width": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                },
+                "fps": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 240
+                }
+              },
+              "required": [
+                "profile_id",
+                "codec",
+                "width",
+                "height",
+                "fps"
+              ]
+            },
+            "description": "profile_id must be unique within this array; checked by the API."
+          },
+          "capabilities": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "supports_onvif": {
+                "type": "boolean",
+                "default": false
+              },
+              "supports_ptz": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": []
+          }
+        },
+        "required": [
+          "schema_version",
+          "source_id",
+          "device_id",
+          "display_name",
+          "device_kind",
+          "transport",
+          "input_mode",
+          "motion_mode",
+          "profiles",
+          "capabilities"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "const": "RTSP"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "input_mode": {
+                  "const": "PULL"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "const": "WEBRTC"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "input_mode": {
+                  "const": "PUSH"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "device_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S",
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "\u0000"
+                }
+              }
+            ]
+          },
+          "device_kind": {
+            "enum": [
+              "CCTV",
+              "SMART_GLASSES",
+              "TEST"
+            ]
+          }
+        },
+        "required": [
+          "schema_version",
+          "device_id",
+          "display_name",
+          "device_kind"
+        ],
+        "description": "Exact property names and unique JSON keys required. Null field values are invalid. NUL is not allowed in display_name."
+      },
+      "Device": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "device_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S",
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "\u0000"
+                }
+              }
+            ]
+          },
+          "device_kind": {
+            "enum": [
+              "CCTV",
+              "SMART_GLASSES",
+              "TEST"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "format": "int64",
+            "maximum": 9223372036854775807
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "schema_version",
+          "device_id",
+          "display_name",
+          "device_kind",
+          "version",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "DeviceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "device",
+          "request_id"
+        ],
+        "properties": {
+          "device": {
+            "$ref": "#/components/schemas/Device"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "next_cursor",
+          "request_id"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque cursor or null when no further page exists."
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "SourceCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "source_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+            "not": {
+              "const": "validate"
+            }
+          },
+          "device_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "channel_key": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S",
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "\u0000"
+                }
+              }
+            ]
+          },
+          "transport": {
+            "enum": [
+              "RTSP",
+              "WEBRTC"
+            ]
+          },
+          "input_mode": {
+            "enum": [
+              "PULL",
+              "PUSH"
+            ]
+          },
+          "motion_mode": {
+            "enum": [
+              "FIXED",
+              "MOVING",
+              "UNKNOWN"
+            ]
+          },
+          "profiles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+                },
+                "codec": {
+                  "type": "string",
+                  "enum": [
+                    "AUTO",
+                    "H264",
+                    "H265",
+                    "VP8",
+                    "VP9",
+                    "AV1"
+                  ]
+                },
+                "width": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                },
+                "fps": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 240
+                }
+              },
+              "required": [
+                "profile_id",
+                "codec",
+                "width",
+                "height",
+                "fps"
+              ]
+            },
+            "description": "profile_id must be unique within this array; checked by the API."
+          }
+        },
+        "required": [
+          "schema_version",
+          "source_id",
+          "device_id",
+          "channel_key",
+          "display_name",
+          "transport",
+          "input_mode",
+          "motion_mode",
+          "profiles"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "const": "RTSP"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "input_mode": {
+                  "const": "PULL"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "const": "WEBRTC"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "input_mode": {
+                  "const": "PUSH"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Registration metadata only. Exact field names and unique JSON keys required at every object level; null values rejected. Profile order is preserved; numeric FPS spellings normalize to their numeric value. source_id validate is reserved for the existing validation endpoint. No connection credentials."
+      },
+      "VideoSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "source_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+            "not": {
+              "const": "validate"
+            }
+          },
+          "device_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "channel_key": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S",
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "\u0000"
+                }
+              }
+            ]
+          },
+          "transport": {
+            "enum": [
+              "RTSP",
+              "WEBRTC"
+            ]
+          },
+          "input_mode": {
+            "enum": [
+              "PULL",
+              "PUSH"
+            ]
+          },
+          "motion_mode": {
+            "enum": [
+              "FIXED",
+              "MOVING",
+              "UNKNOWN"
+            ]
+          },
+          "profiles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "profile_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+                },
+                "codec": {
+                  "type": "string",
+                  "enum": [
+                    "AUTO",
+                    "H264",
+                    "H265",
+                    "VP8",
+                    "VP9",
+                    "AV1"
+                  ]
+                },
+                "width": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 16384
+                },
+                "fps": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 240
+                }
+              },
+              "required": [
+                "profile_id",
+                "codec",
+                "width",
+                "height",
+                "fps"
+              ]
+            },
+            "description": "profile_id must be unique within this array; checked by the API."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "format": "int64",
+            "maximum": 9223372036854775807
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "schema_version",
+          "source_id",
+          "device_id",
+          "channel_key",
+          "display_name",
+          "transport",
+          "input_mode",
+          "motion_mode",
+          "profiles",
+          "version",
+          "created_at",
+          "updated_at"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "const": "RTSP"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "input_mode": {
+                  "const": "PULL"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "const": "WEBRTC"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "input_mode": {
+                  "const": "PUSH"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Persisted registration metadata and declared stream profiles. This does not describe a live stream."
+      },
+      "SourceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "request_id",
+          "registration_state",
+          "runtime_verified"
+        ],
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/VideoSource"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "registration_state": {
+            "const": "REGISTERED"
+          },
+          "runtime_verified": {
+            "const": false
+          }
+        }
+      },
+      "SourceList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "next_cursor",
+          "request_id"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VideoSource"
+            },
+            "maxItems": 200
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque source cursor bound to the exact device_id filter, or null on the last page. Reuse unchanged with the same filter.",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "request_id": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "expected_version",
+          "display_name"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9223372036854775807,
+            "description": "Exact signed 64-bit JSON integer token. Decimal and exponent notation, strings, null and overflow are rejected."
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S",
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "\u0000"
+                }
+              }
+            ]
+          }
+        },
+        "description": "All fields required. Exact property names, unique JSON keys, valid UTF-8 and no null values. Name whitespace is preserved. Missing or invalid semantic values return 422; ambiguous JSON and invalid integer tokens return 400."
+      },
+      "SourceUpdate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "expected_version",
+          "display_name"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9223372036854775807,
+            "description": "Exact signed 64-bit JSON integer token. Decimal and exponent notation, strings, null and overflow are rejected. This is the source version, not its parent device version."
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S",
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "\u0000"
+                }
+              }
+            ]
+          }
+        },
+        "description": "All fields required. Exact property names, unique JSON keys, valid UTF-8 and no null values. Name whitespace is preserved. Missing or invalid semantic values return 422; ambiguous JSON and invalid integer tokens return 400."
+      },
+      "SourceDelete": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "expected_version"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9223372036854775807,
+            "description": "Exact signed 64-bit JSON integer token. Fractions and exponent notation must be rejected by the HTTP decoder."
+          }
+        },
+        "description": "Only these two fields are allowed. Reject duplicate keys (including escaped duplicates), invalid UTF-8, unknown/case-variant fields, null, nonobjects and trailing JSON. expected_version must be an exact int64 integer token; floats and exponent notation are not accepted. No force, cascade, purge or restore option."
+      },
+      "SourceDeletion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "source_id",
+          "version",
+          "deleted_at"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "source_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+            "not": {
+              "anyOf": [
+                {
+                  "const": "validate"
+                },
+                {
+                  "pattern": "[^A-Za-z0-9._-]"
+                }
+              ]
+            }
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 9223372036854775807
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z$",
+            "not": {
+              "pattern": "\\s"
+            }
+          }
+        }
+      },
+      "SourceDeleteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deletion",
+          "registration_state",
+          "runtime_verified",
+          "request_id"
+        ],
+        "properties": {
+          "deletion": {
+            "$ref": "#/components/schemas/SourceDeletion"
+          },
+          "registration_state": {
+            "const": "DELETED"
+          },
+          "runtime_verified": {
+            "const": false
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "DeviceDelete": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "expected_version"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9223372036854775807,
+            "description": "Exact signed 64-bit JSON integer token. Fractions and exponent notation must be rejected by the HTTP decoder."
+          }
+        },
+        "description": "Only these two fields are allowed. Reject duplicate keys (including escaped duplicates), invalid UTF-8, unknown/case-variant fields, null, nonobjects and trailing JSON. expected_version must be an exact int64 integer token; floats and exponent notation are not accepted. No force, cascade, purge or restore option."
+      },
+      "DeviceDeletion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema_version",
+          "device_id",
+          "version",
+          "deleted_at"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "v1"
+          },
+          "device_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+            "not": {
+              "pattern": "[^A-Za-z0-9._-]"
+            },
+            "description": "Existing Device ID rules. Unlike Source ID, lowercase validate is a valid device ID."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 9223372036854775807
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z$",
+            "not": {
+              "pattern": "\\s"
+            }
+          }
+        }
+      },
+      "DeviceDeleteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deletion",
+          "registration_state",
+          "runtime_verified",
+          "request_id"
+        ],
+        "properties": {
+          "deletion": {
+            "$ref": "#/components/schemas/DeviceDeletion"
+          },
+          "registration_state": {
+            "const": "DELETED"
+          },
+          "runtime_verified": {
+            "const": false
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

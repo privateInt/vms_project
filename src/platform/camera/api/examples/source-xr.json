@@ -1,0 +1,23 @@
+{
+  "schema_version": "v1",
+  "source_id": "source-xr-001",
+  "device_id": "device-glasses-001",
+  "display_name": "스마트글래스 검증 입력",
+  "device_kind": "SMART_GLASSES",
+  "transport": "WEBRTC",
+  "input_mode": "PUSH",
+  "motion_mode": "MOVING",
+  "profiles": [
+    {
+      "profile_id": "main",
+      "codec": "H264",
+      "width": 1280,
+      "height": 720,
+      "fps": 30
+    }
+  ],
+  "capabilities": {
+    "supports_onvif": false,
+    "supports_ptz": false
+  }
+}

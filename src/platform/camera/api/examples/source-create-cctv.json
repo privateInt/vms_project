@@ -1,0 +1,26 @@
+{
+  "schema_version": "v1",
+  "source_id": "entrance-main",
+  "device_id": "entrance-camera",
+  "channel_key": "ch1",
+  "display_name": "입구 영상",
+  "transport": "RTSP",
+  "input_mode": "PULL",
+  "motion_mode": "FIXED",
+  "profiles": [
+    {
+      "profile_id": "main",
+      "codec": "H264",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30
+    },
+    {
+      "profile_id": "sub",
+      "codec": "H264",
+      "width": 640,
+      "height": 360,
+      "fps": 15
+    }
+  ]
+}

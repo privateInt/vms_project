@@ -1,0 +1,29 @@
+# Disposable storage verification only. No production ports, volumes or networks.
+services:
+  camera-test-db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: vms_camera_test
+      POSTGRES_USER: vms_camera_test
+      POSTGRES_PASSWORD: "${VMS_CAMERA_TEST_PASSWORD:?test runner sets an ephemeral password}"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U vms_camera_test -d vms_camera_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  camera-storage-test:
+    image: golang:1.27.1-bookworm
+    working_dir: /work
+    volumes:
+      - ../../platform:/source:ro
+    environment:
+      CAMERA_TEST_DATABASE_URL: "postgres://vms_camera_test:${VMS_CAMERA_TEST_PASSWORD:?test runner sets an ephemeral password}@camera-test-db:5432/vms_camera_test?sslmode=disable"
+      CAMERA_TEST_ALLOW_SCHEMA_RESET: "1"
+      GOTOOLCHAIN: local
+    depends_on:
+      camera-test-db:
+        condition: service_healthy
+    # These packages share and reset the same disposable schema; run serially.
+    command: [sh, -ec, "cp -a /source/. /work/; go test -p 1 -race -count=1 -v ./...; go vet ./..."]

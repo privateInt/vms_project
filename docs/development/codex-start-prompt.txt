@@ -1,0 +1,19 @@
+이 저장소의 개발을 이어서 진행해.
+
+먼저 AGENTS.md, docs/development/working-standards.md, docs/development/codex-handoff.md,
+docs/development/codex-backlog.md, docs/progress/20261012-codex-handoff.md와 서버 증거 JSON을 읽어.
+실제 현재 파일·사용자 변경·도구 버전·실행 환경을 확인하고 최신 문서와 다르면 사실을 우선해.
+
+첫 작업은 H01: 11-D1e의 REGISTRY_TLS_COMPOSE_SECRETS_CHANGED 오류 수정이다.
+실제 Compose의 안전하게 추출한 secret source/target으로 재현하고 정확한 mount 등가성만 허용해.
+실패 전에 생성됐을 수 있는 prepared-v1과 source revision 변경도 함께 해결해.
+기존 receipt를 수동 편집하거나 hash 검사를 제거하거나 var를 통째로 삭제하지 마.
+기존 도구의 --apply를 곧바로 재실행하지 말고 재실행 호환성을 먼저 구현·검증해.
+
+작은 단위마다 코드·테스트·문서·manifest를 완결하고, 승인된 backlog를 자동으로 이어서 진행해.
+백업 추가 개발·자동 백업은 하지 마. 현재 설정·키·DB·TLS 공급·사용자 자료는 보존해.
+이번 실행 범위는 코드·테스트·문서와 격리 개발이다. 운영 서비스/DB/schema/HBA/.env 전환은 실행하지 마.
+이미 제공된 권한의 필수 작업마다 재확인을 요청하지 마.
+실장비·GPU·운영 실행 범위가 필요한 곳에서는 미검증을 완료로 표시하지 말고 필요한 조건을 보고해.
+API가 준비된 시점에 플랫폼별 Streamlit 테스트 페이지를 확장해. Jupyter 중계·임의 port 공개는 하지 마.
+구현은 src/platform 및 src/infra, 문서는 docs에 두고 네 플랫폼의 데이터 소유권/API 경계를 유지해.

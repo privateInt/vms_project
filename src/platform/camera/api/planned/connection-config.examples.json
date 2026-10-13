@@ -1,0 +1,180 @@
+{
+  "create_requests": [
+    {
+      "name": "rtsp-config-001",
+      "method": "POST",
+      "path": "/api/v1/connection-configs",
+      "idempotency_key": "rtsp-config-001-create",
+      "body": {
+        "schema_version": "v1",
+        "connection_config_id": "rtsp-config-001",
+        "source_id": "camera-main",
+        "profile_id": "main",
+        "adapter": "RTSP_PULL",
+        "endpoint": {
+          "host": "192.168.0.10",
+          "port": 554,
+          "path": "/stream1",
+          "rtp_transport": "TCP"
+        },
+        "auth": {
+          "mode": "CREDENTIAL_REF",
+          "credential_id": "camera-auth-001",
+          "credential_version": 1
+        }
+      }
+    },
+    {
+      "name": "rtsp-config-002",
+      "method": "POST",
+      "path": "/api/v1/connection-configs",
+      "idempotency_key": "rtsp-config-002-create",
+      "body": {
+        "schema_version": "v1",
+        "connection_config_id": "rtsp-config-002",
+        "source_id": "lab-camera",
+        "profile_id": "main",
+        "adapter": "RTSP_PULL",
+        "endpoint": {
+          "host": "camera.example.invalid",
+          "port": 8554,
+          "path": "/Streaming/Channels/101",
+          "rtp_transport": "TCP"
+        },
+        "auth": {
+          "mode": "NONE"
+        }
+      }
+    },
+    {
+      "name": "rtsp-config-003",
+      "method": "POST",
+      "path": "/api/v1/connection-configs",
+      "idempotency_key": "rtsp-config-003-create",
+      "body": {
+        "schema_version": "v1",
+        "connection_config_id": "rtsp-config-003",
+        "source_id": "ipv6-camera",
+        "profile_id": "main",
+        "adapter": "RTSP_PULL",
+        "endpoint": {
+          "host": "2001:db8::10",
+          "port": 554,
+          "path": "/stream1",
+          "rtp_transport": "TCP"
+        },
+        "auth": {
+          "mode": "CREDENTIAL_REF",
+          "credential_id": "camera-auth-003",
+          "credential_version": 7
+        }
+      }
+    }
+  ],
+  "first_success": {
+    "http_status": 201,
+    "headers": {
+      "Idempotency-Replayed": "false",
+      "Cache-Control": "no-store",
+      "X-Request-ID": "example-config-create-001",
+      "Location": "/api/v1/connection-configs/rtsp-config-001"
+    },
+    "body": {
+      "connection_config": {
+        "schema_version": "v1",
+        "connection_config_id": "rtsp-config-001",
+        "source_id": "camera-main",
+        "profile_id": "main",
+        "adapter": "RTSP_PULL",
+        "auth": {
+          "mode": "CREDENTIAL_REF",
+          "credential_id": "camera-auth-001",
+          "credential_version": 1
+        },
+        "version": 1,
+        "created_at": "2026-10-02T02:30:00.123456Z",
+        "updated_at": "2026-10-02T02:30:00.123456Z"
+      },
+      "configuration_state": "CONFIGURED",
+      "runtime_verified": false,
+      "request_id": "example-config-create-001"
+    }
+  },
+  "same_key_replay": {
+    "http_status": 201,
+    "headers": {
+      "Idempotency-Replayed": "true",
+      "Cache-Control": "no-store",
+      "X-Request-ID": "example-config-create-002",
+      "Location": "/api/v1/connection-configs/rtsp-config-001"
+    },
+    "body": {
+      "connection_config": {
+        "schema_version": "v1",
+        "connection_config_id": "rtsp-config-001",
+        "source_id": "camera-main",
+        "profile_id": "main",
+        "adapter": "RTSP_PULL",
+        "auth": {
+          "mode": "CREDENTIAL_REF",
+          "credential_id": "camera-auth-001",
+          "credential_version": 1
+        },
+        "version": 1,
+        "created_at": "2026-10-02T02:30:00.123456Z",
+        "updated_at": "2026-10-02T02:30:00.123456Z"
+      },
+      "configuration_state": "CONFIGURED",
+      "runtime_verified": false,
+      "request_id": "example-config-create-002"
+    }
+  },
+  "replace_request": {
+    "method": "PUT",
+    "path": "/api/v1/connection-configs/rtsp-config-001",
+    "idempotency_key": "config-replace-001",
+    "body": {
+      "schema_version": "v1",
+      "expected_version": 1,
+      "endpoint": {
+        "host": "192.168.0.10",
+        "port": 554,
+        "path": "/stream2",
+        "rtp_transport": "TCP"
+      },
+      "auth": {
+        "mode": "CREDENTIAL_REF",
+        "credential_id": "camera-auth-001",
+        "credential_version": 2
+      }
+    }
+  },
+  "delete_request": {
+    "method": "DELETE",
+    "path": "/api/v1/connection-configs/rtsp-config-001",
+    "idempotency_key": "config-delete-001",
+    "body": {
+      "schema_version": "v1",
+      "expected_version": 2
+    }
+  },
+  "delete_success": {
+    "http_status": 200,
+    "headers": {
+      "Idempotency-Replayed": "false",
+      "Cache-Control": "no-store",
+      "X-Request-ID": "example-config-delete-001"
+    },
+    "body": {
+      "deletion": {
+        "schema_version": "v1",
+        "connection_config_id": "rtsp-config-001",
+        "version": 3,
+        "deleted_at": "2026-10-02T02:40:00.123456Z"
+      },
+      "configuration_state": "DELETED",
+      "runtime_verified": false,
+      "request_id": "example-config-delete-001"
+    }
+  }
+}

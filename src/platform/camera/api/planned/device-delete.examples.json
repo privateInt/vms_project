@@ -1,0 +1,72 @@
+{
+  "requests": [
+    {
+      "name": "delete_cctv_after_all_sources_deleted",
+      "method": "DELETE",
+      "device_id": "camera-001",
+      "idempotency_key": "device-delete-001",
+      "body": {
+        "schema_version": "v1",
+        "expected_version": 2
+      }
+    },
+    {
+      "name": "delete_empty_glasses_device",
+      "method": "DELETE",
+      "device_id": "glasses-001",
+      "idempotency_key": "device-delete-002",
+      "body": {
+        "schema_version": "v1",
+        "expected_version": 7
+      }
+    },
+    {
+      "name": "delete_device_named_validate",
+      "method": "DELETE",
+      "device_id": "validate",
+      "idempotency_key": "device-delete-003",
+      "body": {
+        "schema_version": "v1",
+        "expected_version": 1
+      }
+    }
+  ],
+  "first_success": {
+    "http_status": 200,
+    "headers": {
+      "Idempotency-Replayed": "false",
+      "X-Request-ID": "example-device-delete-001",
+      "Cache-Control": "no-store"
+    },
+    "body": {
+      "deletion": {
+        "schema_version": "v1",
+        "device_id": "camera-001",
+        "version": 3,
+        "deleted_at": "2026-10-01T11:20:00.123456Z"
+      },
+      "registration_state": "DELETED",
+      "runtime_verified": false,
+      "request_id": "example-device-delete-001"
+    }
+  },
+  "same_key_replay": {
+    "http_status": 200,
+    "headers": {
+      "Idempotency-Replayed": "true",
+      "X-Request-ID": "example-device-delete-002",
+      "Cache-Control": "no-store"
+    },
+    "body": {
+      "deletion": {
+        "schema_version": "v1",
+        "device_id": "camera-001",
+        "version": 3,
+        "deleted_at": "2026-10-01T11:20:00.123456Z"
+      },
+      "registration_state": "DELETED",
+      "runtime_verified": false,
+      "request_id": "example-device-delete-002"
+    }
+  }
+}

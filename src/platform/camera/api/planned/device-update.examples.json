@@ -1,0 +1,32 @@
+[
+  {
+    "name": "rename_cctv",
+    "device_id": "camera-001",
+    "idempotency_key": "device-name-change-001",
+    "body": {
+      "schema_version": "v1",
+      "expected_version": 1,
+      "display_name": "1층 출입구 CCTV"
+    }
+  },
+  {
+    "name": "rename_glasses",
+    "device_id": "glasses-001",
+    "idempotency_key": "device-name-change-002",
+    "body": {
+      "schema_version": "v1",
+      "expected_version": 7,
+      "display_name": "현장 점검 글래스"
+    }
+  },
+  {
+    "name": "preserve_surrounding_spaces",
+    "device_id": "test-001",
+    "idempotency_key": "device-name-change-003",
+    "body": {
+      "schema_version": "v1",
+      "expected_version": 2,
+      "display_name": "  시험 장치  "
+    }
+  }
+]

@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vms:camera:planned:connection-config:v1",
+  "title": "ConnectionConfig contract v1 (planned, not activated)",
+  "$comment": "Root is Create. Replace/Delete/Metadata/Responses are $defs. Static shape only: source/profile/credential ownership, permissions, raw integer syntax, usage locks, secret storage, DNS/network allowlist and device connectivity require later implementation tests. Enable format assertion in the validator.",
+  "x-vms-contract-status": "planned",
+  "x-vms-adapter-scope": "RTSP_PULL metadata only",
+  "$ref": "#/$defs/ConnectionConfigCreate",
+  "$defs": {
+    "ID": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "not": {
+        "pattern": "[^A-Za-z0-9._-]"
+      }
+    },
+    "SourceID": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "[^A-Za-z0-9._-]"
+          },
+          {
+            "const": "validate"
+          }
+        ]
+      }
+    },
+    "Version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9223372036854775807,
+      "description": "HTTP decoder must require a signed int64 integer token; no decimal/exponent token or bool."
+    },
+    "UTC": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z$",
+      "not": {
+        "pattern": "\\s"
+      }
+    },
+    "Host": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "anyOf": [
+        {
+          "format": "ipv4",
+          "pattern": "^[0-9]{1,3}(\\.[0-9]{1,3}){3}$",
+          "not": {
+            "pattern": "[^0-9.]"
+          }
+        },
+        {
+          "format": "ipv6",
+          "pattern": "^[0-9A-Fa-f:.]+$",
+          "not": {
+            "pattern": "[^0-9A-Fa-f:.]"
+          }
+        },
+        {
+          "pattern": "^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$",
+          "not": {
+            "pattern": "[^A-Za-z0-9.-]"
+          }
+        }
+      ],
+      "description": "Canonical IPv4, unbracketed IPv6 without zone, or ASCII multi-label DNS name without trailing dot. Shape is not permission to dial; network policy is mandatory at connection time."
+    },
+    "Path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "pattern": "^/[A-Za-z0-9._~/-]*$",
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "[^A-Za-z0-9._~/-]"
+          },
+          {
+            "pattern": "//"
+          },
+          {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        ]
+      },
+      "description": "Restricted non-secret RTSP path. Query, fragment, percent escapes and dot segments are unsupported in v1."
+    },
+    "Endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "port",
+        "path",
+        "rtp_transport"
+      ],
+      "properties": {
+        "host": {
+          "$ref": "#/$defs/Host"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "path": {
+          "$ref": "#/$defs/Path"
+        },
+        "rtp_transport": {
+          "const": "TCP"
+        }
+      }
+    },
+    "Authentication": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "const": "NONE"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "credential_id",
+            "credential_version"
+          ],
+          "properties": {
+            "mode": {
+              "const": "CREDENTIAL_REF"
+            },
+            "credential_id": {
+              "$ref": "#/$defs/ID"
+            },
+            "credential_version": {
+              "$ref": "#/$defs/Version"
+            }
+          }
+        }
+      ]
+    },
+    "ConnectionConfigCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "connection_config_id",
+        "source_id",
+        "profile_id",
+        "adapter",
+        "endpoint",
+        "auth"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "connection_config_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "source_id": {
+          "$ref": "#/$defs/SourceID"
+        },
+        "profile_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "adapter": {
+          "const": "RTSP_PULL"
+        },
+        "endpoint": {
+          "$ref": "#/$defs/Endpoint"
+        },
+        "auth": {
+          "$ref": "#/$defs/Authentication"
+        }
+      }
+    },
+    "ConnectionConfigReplace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "expected_version",
+        "endpoint",
+        "auth"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "expected_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "endpoint": {
+          "$ref": "#/$defs/Endpoint"
+        },
+        "auth": {
+          "$ref": "#/$defs/Authentication"
+        }
+      }
+    },
+    "ConnectionConfigDelete": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "expected_version"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "expected_version": {
+          "$ref": "#/$defs/Version"
+        }
+      }
+    },
+    "ConnectionConfigMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "connection_config_id",
+        "source_id",
+        "profile_id",
+        "adapter",
+        "auth",
+        "version",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "connection_config_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "source_id": {
+          "$ref": "#/$defs/SourceID"
+        },
+        "profile_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "adapter": {
+          "const": "RTSP_PULL"
+        },
+        "auth": {
+          "$ref": "#/$defs/Authentication"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "created_at": {
+          "$ref": "#/$defs/UTC"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/UTC"
+        }
+      }
+    },
+    "ConnectionConfigResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connection_config",
+        "configuration_state",
+        "runtime_verified",
+        "request_id"
+      ],
+      "properties": {
+        "connection_config": {
+          "$ref": "#/$defs/ConnectionConfigMetadata"
+        },
+        "configuration_state": {
+          "const": "CONFIGURED"
+        },
+        "runtime_verified": {
+          "const": false
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ConnectionConfigDeletion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "connection_config_id",
+        "version",
+        "deleted_at"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "v1"
+        },
+        "connection_config_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 9223372036854775807,
+          "description": "HTTP decoder must require a signed int64 integer token; no decimal/exponent token or bool."
+        },
+        "deleted_at": {
+          "$ref": "#/$defs/UTC"
+        }
+      }
+    },
+    "ConnectionConfigDeleteResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deletion",
+        "configuration_state",
+        "runtime_verified",
+        "request_id"
+      ],
+      "properties": {
+        "deletion": {
+          "$ref": "#/$defs/ConnectionConfigDeletion"
+        },
+        "configuration_state": {
+          "const": "DELETED"
+        },
+        "runtime_verified": {
+          "const": false
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

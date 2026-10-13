@@ -1,0 +1,103 @@
+# Disposable PKI-profile rehearsal. Each role receives its own synthetic volume.
+services:
+  tls-files-owner:
+    image: postgres:17.11-bookworm
+    volumes:
+      - type: bind
+        source: ${VMS_TLS_INPUT:?isolated runner required}
+        target: /input
+        read_only: true
+      - db-tls:/db
+      - control:/control
+      - runtime:/runtime
+      - maintenance:/maintenance
+      - offsource:/offsource
+  tls-build:
+    image: golang:1.27.1-bookworm
+    working_dir: /work
+    environment:
+      GOTOOLCHAIN: local
+    volumes:
+      - ../../platform:/source:ro
+      - exchange:/exchange
+  tls-db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: vms_camera_tls_test
+      POSTGRES_USER: vms_camera_tls_owner
+      POSTGRES_PASSWORD_FILE: /tls-control/owner-password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command: [postgres, -c, ssl=on, -c, ssl_min_protocol_version=TLSv1.2, -c, ssl_cert_file=/db-tls/server.pem, -c, ssl_key_file=/db-tls/server.key, -c, ssl_ca_file=/db-tls/ca.pem, -c, hba_file=/tls-control/pg_hba.conf]
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - db-tls:/db-tls:ro
+      - control:/tls-control:ro
+      - control:/docker-entrypoint-initdb.d:ro
+    networks:
+      storage:
+        ipv4_address: ${VMS_TLS_DB_IP:?isolated runner required}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U vms_camera_tls_owner -d vms_camera_tls_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  tls-runtime:
+    image: golang:1.27.1-bookworm
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    entrypoint: [sleep, infinity]
+    environment:
+      CAMERA_TLS_TEST_MODE: runtime
+      CAMERA_TLS_TEST_BASE: /tls-input
+    volumes:
+      - runtime:/tls-input:ro
+      - exchange:/exchange:ro
+    networks:
+      storage:
+        ipv4_address: ${VMS_TLS_RUNTIME_IP:?isolated runner required}
+  tls-maintenance:
+    image: golang:1.27.1-bookworm
+    user: "10002:10002"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    entrypoint: [sleep, infinity]
+    environment:
+      CAMERA_TLS_TEST_MODE: maintenance
+      CAMERA_TLS_TEST_BASE: /tls-input
+    volumes:
+      - maintenance:/tls-input:ro
+      - exchange:/exchange:ro
+    networks:
+      storage:
+        ipv4_address: ${VMS_TLS_MAINTENANCE_IP:?isolated runner required}
+  tls-offsource:
+    image: golang:1.27.1-bookworm
+    user: "10003:10003"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    entrypoint: [sleep, infinity]
+    environment:
+      CAMERA_TLS_TEST_MODE: offsource
+      CAMERA_TLS_TEST_BASE: /tls-input
+    volumes:
+      - offsource:/tls-input:ro
+      - exchange:/exchange:ro
+    networks:
+      storage:
+        ipv4_address: ${VMS_TLS_OFFSOURCE_IP:?isolated runner required}
+networks:
+  storage:
+    external: true
+    name: ${VMS_TLS_NETWORK:?isolated runner required}
+volumes:
+  db-tls: {}
+  control: {}
+  runtime: {}
+  maintenance: {}
+  offsource: {}
+  exchange: {}
