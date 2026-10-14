@@ -4,13 +4,13 @@
 
 | 준비 항목 | 현재 판정 |
 |---|---|
-| 공통 규칙·테스트 기준·에이전트 구성·템플릿 | 1.2-preparation 배포판 준비 |
+| 공통 규칙·테스트 기준·에이전트 구성·템플릿 | 1.3-preparation 배포판 준비 |
 | VMS 책임·보호·검사·첫 H01 연결 | [프로젝트 규칙](../codex/project.md)과 기존 backlog를 연결 |
 | 이번 문서 GitHub 전달 | 2026-10-14 privateInt 연결·두 저장소 쓰기 권한 확인. [준비 PR #1](https://github.com/privateInt/vms_project/pull/1)에서 게시·검토 결과 확인. main 반영은 독립 검토 후 |
 | GitHub 필수 검사·독립 승인 강제 | 현재 main 보호 없음·ruleset 없음·필수 검사 목록 비어 있음. 자동 개발 전 적용 필요 |
 | GitHub 자동 병합 | 현재 꺼짐. PR 게시와 별개이며 아직 활성화하지 않음 |
 | 서버 CLI·ChatGPT 계정·모델·동시 실행 | 실제 확인 전 |
-| 크레딧 미사용 제어 | 확인 전·무인 실행 차단 |
+| 결제·사용량 정책 | 사용자 변경 D24에 따라 미사용 강제 입증은 선행조건에서 제외. 에이전트의 자동 충전·추가 구매·API 전환 금지. 계정 자동 충전 설정을 조회/변경한 것은 아님 |
 | 독립 검사 계획·최종 reviewer | 별도 reviewer의 문서 검토·조회 도구 사전 계획 검토 수행. GitHub 강제 gate는 미구현 |
 | 모델 호출 없는 조회 도구 | [공통 도구](../codex/common/READINESS.md)는 Agent의 동일 고정 버전 사용. VMS 소스 추가/복제 없음. native 인수 미확인 |
 | 기능 개발·worker·scheduler·운영 변경 | 미시작 |
