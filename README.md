@@ -1,5 +1,8 @@
 # VMS Project
 
+개발 준비: [Codex 규칙·구성·템플릿](docs/codex/README.md) · [프로젝트별 규칙](docs/codex/project.md) · [준비와 첫 작업](docs/codex/work-plan.md). 공통 기준을 이 저장소에도 포함하며 본격 기능 개발과 무인 실행은 실행 환경 확인 후 시작합니다.
+
+
 CCTV와 스마트글래스의 영상 입력, 모델 배포, 영상 분석, 운영을 독립 플랫폼으로 구성하는 프로젝트입니다. 목표 경로는 `/home/shshin/workspace/vms_project`입니다.
 
 **현재 기능 개발을 중단하고 Codex 이관 자료를 준비했습니다.** 첫 작업은 11-D1e의 `REGISTRY_TLS_COMPOSE_SECRETS_CHANGED` 수정과 실패 후 준비 파일/source revision 대응입니다. 오류 수정·운영 TLS 전환은 아직 수행하지 않았습니다. [Codex 이관](docs/development/codex-handoff.md) · [개발 순서·완료 조건](docs/development/codex-backlog.md) · [시작 지시문](docs/development/codex-start-prompt.txt) · [최신 상태](docs/progress/20261012-codex-handoff.md)
